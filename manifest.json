@@ -1,0 +1,16 @@
+{
+  "name": "饮食管家",
+  "short_name": "饮食管家",
+  "description": "胰腺炎出院恢复期的饮食管理助手：每日菜谱、拍照识别能不能吃、症状参考建议、健康档案记录",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F6F8F7",
+  "theme_color": "#2E9E5B",
+  "icons": [
+    { "src": "icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "maskable" }
+  ]
+}

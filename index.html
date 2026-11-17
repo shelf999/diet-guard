@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#2E9E5B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>饮食管家</title>
+<style>
+  :root{
+    --green:#2E9E5B; --green-dark:#237A46; --green-light:#E8F5EC;
+    --bg:#F6F8F7; --card:#FFFFFF; --text:#1F2937; --text2:#4B5563;
+    --danger:#D93026; --danger-bg:#FDECEA; --warn:#E8710A; --warn-bg:#FEF3E6;
+    --ok:#1E8E3E; --ok-bg:#E6F4EA; --line:#E5E7EB; --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{font-size:18px}
+  body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","HarmonyOS Sans SC",sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;max-width:640px;margin:0 auto}
+  .topbar{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--green),#3DBE70);
+    color:#fff;padding:calc(.5rem + env(safe-area-inset-top)) .55rem .5rem;display:flex;align-items:center;
+    box-shadow:0 2px 10px rgba(46,158,91,.22);gap:.3rem}
+  .topbar .t{font-size:1.06rem;font-weight:700;letter-spacing:.02em;flex:1;text-align:center;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .topbar .s{font-size:.68rem;background:rgba(255,255,255,.2);padding:.16rem .48rem;border-radius:999px;white-space:nowrap}
+  .topback{background:rgba(255,255,255,.2);border:none;color:#fff;font-family:inherit;
+    font-size:.95rem;font-weight:700;padding:.4rem .65rem;border-radius:999px;min-height:40px;
+    min-width:72px;cursor:pointer;white-space:nowrap}
+  .topback:active{background:rgba(255,255,255,.36)}
+  .topback.is-ghost{visibility:hidden;pointer-events:none}
+  main{padding:.9rem .9rem calc(2rem + env(safe-area-inset-bottom))}
+  .view{display:none;animation:fadeIn .18s ease}
+  .view.on{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border-radius:18px;padding:1rem 1.05rem;margin-bottom:.9rem;
+    box-shadow:0 2px 10px rgba(31,41,55,.06);border:1px solid rgba(31,41,55,.04)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;border:none;border-radius:12px;
+    padding:.75rem 1.2rem;font-size:1.05rem;font-weight:600;cursor:pointer;transition:.15s;min-height:52px}
+  .btn:active{transform:scale(.97)}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-green:disabled{background:#A7CBB5}
+  .btn-light{background:var(--green-light);color:var(--green-dark)}
+  .btn-block{display:flex;width:100%}
+  .pagehead{display:flex;align-items:center;gap:.55rem;font-size:1.22rem;font-weight:800;
+    margin:.15rem 0 .85rem;letter-spacing:.01em}
+  .cardhead{display:flex;align-items:center;gap:.45rem;font-size:1.05rem;font-weight:800;margin-bottom:.5rem}
+  .lead{font-size:.9rem;color:var(--text2);line-height:1.6}
+  .upload{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;
+    width:100%;min-height:118px;margin:.9rem 0 .2rem;padding:1rem;cursor:pointer;
+    border:2px dashed #C9D6CD;border-radius:16px;background:#FAFCFA;font-family:inherit;transition:.15s}
+  .upload:active{background:var(--green-light);border-color:var(--green)}
+  .upload .uic{font-size:2rem;line-height:1.2}
+  .upload .ut1{font-size:1rem;font-weight:700;color:var(--green-dark)}
+  .upload .ut2{font-size:.78rem;color:var(--text2)}
+  /* 首页：问候 + 功能列表 */
+  .hi .h1{font-size:1.38rem;font-weight:800;line-height:1.35}
+  .hi .h2{font-size:.86rem;color:var(--text2);margin-top:.15rem}
+  .hi{margin:.15rem 0 .9rem}
+  .navcard{background:var(--card);border-radius:18px;box-shadow:0 2px 10px rgba(31,41,55,.06);
+    border:1px solid rgba(31,41,55,.04);overflow:hidden;margin-bottom:.9rem}
+  .navrow{display:flex;align-items:center;gap:.85rem;padding:.9rem .95rem;cursor:pointer;transition:background .15s}
+  .navrow+.navrow{box-shadow:inset 0 1px 0 var(--line)}
+  .navrow:active{background:var(--green-light)}
+  .navic{width:50px;height:50px;flex:0 0 50px;border-radius:15px;display:flex;align-items:center;
+    justify-content:center;font-size:1.5rem;background:var(--green-light)}
+  .navic.v2{background:#E9F0FE} .navic.v3{background:#FEF1E4} .navic.v4{background:#F2EBFD}
+  .navtx{flex:1;min-width:0}
+  .navtx .n{font-size:1.06rem;font-weight:700;line-height:1.35}
+  .navtx .d{font-size:.78rem;color:var(--text2);margin-top:.1rem;line-height:1.4}
+  .navar{color:#C8CDD5;font-size:1.45rem;line-height:1;font-weight:400;padding-right:.15rem}
+  .alert{display:flex;gap:.6rem;background:#FFF6F5;border:1px solid #F6CFCB;color:#B3261E;
+    border-radius:16px;padding:.75rem .9rem;font-size:.83rem;line-height:1.55;margin-bottom:1rem}
+  .alert .aic{font-size:1.1rem;line-height:1.35}
+  .alert b{font-weight:800}
+  .datechip{font-size:.8rem;color:var(--text2)}
+  .menutop{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;margin-bottom:.75rem}
+  .menutop .mtitle{font-size:1.1rem;font-weight:800}
+  .menutop .mdate{font-size:.78rem;color:var(--text2);white-space:nowrap}
+  .meal{background:#F8FBF9;border:1px solid #ECF3EE;border-radius:14px;padding:.7rem .85rem;margin-bottom:.55rem}
+  .meal:last-of-type{margin-bottom:0}
+  .meal .mt{font-size:1.02rem;font-weight:800;color:var(--green-dark);display:flex;align-items:center;gap:.42rem}
+  .meal .mt::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--green);flex:0 0 7px}
+  .meal .mi{font-size:.95rem;margin:.32rem 0 0 .98rem;color:var(--text);line-height:1.55}
+  .meal .mi .g{color:var(--green-dark);font-weight:800}
+  .meal .mn{font-size:.8rem;color:var(--text2);margin:.35rem 0 0 .98rem}
+  .verdict{border-radius:var(--radius);padding:1.2rem;text-align:center;font-size:1.6rem;font-weight:800;
+    margin-bottom:1rem}
+  .v-ok{background:var(--ok-bg);color:var(--ok)}
+  .v-warn{background:var(--warn-bg);color:var(--warn)}
+  .v-bad{background:var(--danger-bg);color:var(--danger)}
+  .v-unk{background:#EEF1F4;color:var(--text2)}
+  .kv{margin-bottom:.8rem}
+  .kv .k{font-size:.85rem;color:var(--text2)}
+  .kv .v{font-size:1rem;font-weight:600}
+  .sev{display:inline-block;font-size:1rem;font-weight:800;border-radius:10px;padding:.3rem .9rem;margin-bottom:.6rem}
+  .sev-emergency{background:var(--danger-bg);color:var(--danger);animation:blink 1.2s infinite}
+  .sev-soon{background:var(--warn-bg);color:var(--warn)}
+  .sev-watch{background:var(--ok-bg);color:var(--ok)}
+  @keyframes blink{50%{opacity:.55}}
+  .redflags{background:var(--danger-bg);border:1.5px solid #F3B4B0;border-radius:12px;padding:.8rem 1rem;margin:.8rem 0}
+  .redflags h4{color:var(--danger);font-size:.95rem;margin-bottom:.3rem}
+  .redflags li{font-size:.9rem;color:#B3261E;margin-left:1.2em}
+  ul.plain{margin-left:1.3em}
+  ul.plain li{margin-bottom:.4rem;font-size:.98rem}
+  textarea,input[type=text],input[type=tel],input[type=number],input[type=date],select{width:100%;
+    border:1.5px solid var(--line);border-radius:12px;padding:.8rem;font-size:1rem;font-family:inherit;
+    background:#fff;color:var(--text)}
+  textarea{min-height:110px;resize:vertical}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green)}
+  label.fl{display:block;font-size:.9rem;font-weight:600;color:var(--text2);margin:.9rem 0 .3rem}
+  .frow{display:flex;gap:.8rem}
+  .frow>div{flex:1}
+  .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#333;color:#fff;
+    padding:.7rem 1.3rem;border-radius:999px;font-size:.95rem;z-index:99;opacity:0;transition:.25s;
+    pointer-events:none;max-width:90%;text-align:center}
+  .toast.on{opacity:.95}
+  .loading{display:flex;flex-direction:column;align-items:center;padding:2.2rem 0;color:var(--text2)}
+  .spin{width:44px;height:44px;border:4px solid var(--green-light);border-top-color:var(--green);
+    border-radius:50%;animation:rot 0.9s linear infinite;margin-bottom:.8rem}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .empty{color:var(--text2);text-align:center;padding:2rem 0}
+  .rec{border-bottom:1px solid var(--line);padding:.9rem 0}
+  .rec .rt{font-size:.8rem;color:var(--text2)}
+  .rec .rs{font-size:.95rem;margin:.2rem 0;font-weight:600}
+  .rec .ra{font-size:.88rem;color:var(--text2);display:none;white-space:pre-wrap}
+  .rec.open .ra{display:block}
+  .rec .del{float:right;background:none;border:none;color:#999;font-size:.8rem;cursor:pointer;padding:.2rem .4rem}
+  .imgprev{text-align:center;margin:.8rem 0}
+  .imgprev img{max-width:100%;max-height:280px;border-radius:12px}
+  .microw{display:flex;gap:.8rem;margin-bottom:.6rem}
+  .talkbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.25rem;
+    width:100%;min-height:104px;border:none;border-radius:22px;
+    background:linear-gradient(135deg,#2E9E5B,#3DBE70);color:#fff;font-size:1.3rem;font-weight:800;
+    cursor:pointer;margin:.9rem 0 .5rem;box-shadow:0 5px 16px rgba(46,158,91,.32);
+    user-select:none;-webkit-user-select:none;touch-action:none;letter-spacing:.02em}
+  .talkbtn:active,.talkbtn.on{transform:scale(.98);background:linear-gradient(135deg,#237A46,#2E9E5B);
+    box-shadow:0 2px 8px rgba(46,158,91,.4)}
+  .talkbtn .tb-ic{font-size:2rem;line-height:1}
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.4rem}
+  .chip{border:1.5px solid var(--line);background:#fff;color:var(--text);border-radius:999px;
+    padding:.5rem .9rem;font-size:.95rem;font-family:inherit;cursor:pointer}
+  .chip:active{background:var(--green-light);border-color:var(--green)}
+  .recmask{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:80;display:none;
+    align-items:center;justify-content:center;pointer-events:none}
+  .recmask.on{display:flex}
+  .recbox{background:rgba(28,28,30,.93);color:#fff;border-radius:22px;padding:1.5rem 2rem;
+    text-align:center;min-width:210px;box-shadow:0 8px 30px rgba(0,0,0,.3)}
+  .recwave{display:flex;align-items:flex-end;justify-content:center;gap:5px;height:46px;margin-bottom:.6rem}
+  .recwave i{display:block;width:5px;background:#3DBE70;border-radius:3px;height:12px;animation:wv .9s ease-in-out infinite}
+  .recwave i:nth-child(2){animation-delay:.15s}
+  .recwave i:nth-child(3){animation-delay:.3s}
+  .recwave i:nth-child(4){animation-delay:.45s}
+  .recwave i:nth-child(5){animation-delay:.6s}
+  @keyframes wv{0%,100%{height:10px}50%{height:40px}}
+  .rectime{font-size:1.6rem;font-weight:800;font-variant-numeric:tabular-nums}
+  .rectip{font-size:.82rem;opacity:.85;margin-top:.35rem}
+  .hide{display:none !important}
+  .footnote{text-align:center;font-size:.72rem;color:#9CA3AF;margin-top:1.5rem}
+  .steps{font-size:.85rem;color:var(--text2);margin-top:.4rem}
+  .wrow{border-bottom:1px solid var(--line);padding:.85rem 0;display:flex;align-items:center;gap:.8rem}
+  .wrow:last-child{border-bottom:none}
+  .wrow .wd{font-size:.85rem;color:var(--text2);flex:1}
+  .wrow .wv{font-size:1.2rem;font-weight:800;color:var(--green-dark)}
+  .wrow .wc{font-size:.8rem;color:var(--text2);min-width:5.5em;text-align:right}
+  .wrow .del{background:none;border:none;color:#999;font-size:.8rem;cursor:pointer;padding:.2rem .3rem}
+  .wsum{background:var(--green-light);border-radius:12px;padding:.8rem 1rem;font-size:.95rem;margin-bottom:.8rem}
+  .wsum b{font-size:1.15rem;color:var(--green-dark)}
+  .autonote{font-size:.78rem;color:var(--green-dark);margin-top:.5rem}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <button class="topback is-ghost" id="topBack" type="button">‹ 首页</button>
+  <span class="t" id="topTitle">饮食管家</span>
+  <span class="s">自用版</span>
+</div>
+<main id="main">
+
+  <!-- ============ 首页 ============ -->
+  <section id="view-home" class="view on">
+    <div class="hi">
+      <div class="datechip" id="todayChip"></div>
+      <div class="h1">今天想吃点啥？</div>
+      <div class="h2">按家人的身体情况安排一天的饭，拿不准的随时问</div>
+    </div>
+    <div class="alert"><span class="aic">⚠️</span><span>出现<b>剧烈腹痛、持续呕吐、发烧、眼白发黄</b>，别犹豫，立即去医院或拨打 120。</span></div>
+    <div class="navcard">
+      <div class="navrow" data-go="menu">
+        <div class="navic">🍚</div>
+        <div class="navtx"><div class="n">今日菜谱</div><div class="d">按年龄体重定量，每样都标明克重</div></div>
+        <div class="navar">›</div>
+      </div>
+      <div class="navrow" data-go="check">
+        <div class="navic v2">📷</div>
+        <div class="navtx"><div class="n">这个能吃吗</div><div class="d">拍张照片，AI 帮你看能不能吃</div></div>
+        <div class="navar">›</div>
+      </div>
+      <div class="navrow" data-go="symptom">
+        <div class="navic v3">🤒</div>
+        <div class="navtx"><div class="n">不舒服怎么办</div><div class="d">按住说话，给参考建议</div></div>
+        <div class="navar">›</div>
+      </div>
+      <div class="navrow" data-go="profile">
+        <div class="navic v4">📋</div>
+        <div class="navtx"><div class="n">健康档案</div><div class="d">家人的情况 · 体重记录 · 复诊给医生看</div></div>
+        <div class="navar">›</div>
+      </div>
+    </div>
+    <p class="footnote">本应用的回答仅供日常参考，不能代替医生诊断</p>
+  </section>
+
+  <!-- ============ 今日菜谱 ============ -->
+  <section id="view-menu" class="view">
+    <div id="menuBody"></div>
+  </section>
+
+  <!-- ============ 能吃吗 ============ -->
+  <section id="view-check" class="view">
+    <div class="card">
+      <p class="lead">拍下食物、菜或商品包装，AI 会识别并判断家人能不能吃。</p>
+      <button class="upload" id="btnPhoto" type="button">
+        <span class="uic">📷</span>
+        <span class="ut1">点这里拍照 / 选照片</span>
+        <span class="ut2">也可以从手机相册里选</span>
+      </button>
+      <input type="file" id="filePhoto" accept="image/*" capture="environment" class="hide">
+      <div class="imgprev" id="imgPrev"></div>
+      <label class="fl">想补充的话（可不填，如：超市买的蛋糕）</label>
+      <input type="text" id="checkText" placeholder="例如：这块蛋糕，或者包装上的名字">
+      <div style="margin-top:.9rem">
+        <button class="btn btn-green btn-block" id="btnCheck" disabled>开始识别</button>
+      </div>
+    </div>
+    <div id="checkResult"></div>
+  </section>
+
+  <!-- ============ 症状 ============ -->
+  <section id="view-symptom" class="view">
+    <div class="card">
+      <p class="lead">按住下面的绿色按钮说话，松开就变成文字——和微信一样。</p>
+      <button class="talkbtn" id="btnTalk">
+        <span class="tb-ic">🎤</span>
+        <span id="talkText">按住 说话</span>
+      </button>
+      <p class="steps" id="micHint">松开后等 1-3 秒，说过的话会变成文字出现在下面框里</p>
+      <textarea id="symptomText" placeholder="也可以直接打字，例如：吃完饭说肚子胀，有点疼，疼了半个小时了"></textarea>
+      <p class="steps" style="margin-top:.6rem">说不清楚？点下面的常用情况，直接就加上去了</p>
+      <div class="chips" id="symptomChips"></div>
+      <div style="margin-top:1rem">
+        <button class="btn btn-green btn-block" id="btnSymptom">问问 AI 怎么办</button>
+      </div>
+    </div>
+    <div id="symptomResult"></div>
+  </section>
+
+  <!-- ============ 健康档案 ============ -->
+  <section id="view-profile" class="view">
+    <div class="card">
+      <p class="lead">填得越全，AI 给菜谱和建议时就越贴合家人的情况。填一次就行，会自动保存。</p>
+      <label class="fl">患者称呼</label>
+      <input type="text" id="pName" placeholder="例如：老李 / 爷爷">
+      <div class="frow">
+        <div><label class="fl">年龄</label><input type="number" id="pAge" placeholder="60"></div>
+        <div><label class="fl">体重（公斤）</label><input type="number" id="pWeight" placeholder="65"></div>
+      </div>
+      <p class="steps">平时在下面的「体重记录」里记体重，这里会自动用最近一次的数字</p>
+      <label class="fl">目前饮食阶段（出院先选流质/半流质，慢慢过渡）</label>
+      <select id="pStage">
+        <option value="">请选择</option>
+        <option>流质（米汤、藕粉为主）</option>
+        <option>半流质（米粥、烂面条为主）</option>
+        <option>软食（馒头、软饭为主）</option>
+        <option>低脂普通饮食</option>
+      </select>
+      <label class="fl">出院日期（可大概）</label>
+      <input type="text" id="pDischarge" placeholder="例如：2026年11月10日">
+      <label class="fl">过敏或吃了不舒服的食物</label>
+      <input type="text" id="pAllergy" placeholder="例如：海鲜、牛奶">
+      <label class="fl">其他疾病（如：糖尿病、高血压）</label>
+      <input type="text" id="pOther" placeholder="没有可不填">
+      <label class="fl">医生的嘱咐 / 备注</label>
+      <input type="text" id="pNotes" placeholder="例如：一个月后复查">
+      <div style="margin-top:1.1rem">
+        <button class="btn btn-green btn-block" id="btnSaveProfile">保存档案</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="cardhead">⚖️ 体重记录</div>
+      <p class="lead">每隔几天给家人称一次并记下来。恢复期体重要平稳，掉得太快要留意；<b>最近一次体重会自动用于菜谱定量</b>。</p>
+      <div class="frow">
+        <div><label class="fl">日期</label><input type="date" id="wDate"></div>
+        <div><label class="fl">体重（公斤）</label><input type="number" id="wVal" inputmode="decimal" step="0.1" placeholder="65.5"></div>
+      </div>
+      <div style="margin-top:1rem">
+        <button class="btn btn-green btn-block" id="btnSaveWeight">记录体重</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="cardhead">📈 体重变化</div>
+      <div id="weightList"></div>
+    </div>
+    <div class="card">
+      <div class="cardhead">📓 症状记录</div>
+      <p class="lead">每次问过“不舒服怎么办”的记录都在这里，复诊时可以直接给医生看。</p>
+      <div id="recordsBody"></div>
+    </div>
+  </section>
+
+</main>
+<div class="toast" id="toast"></div>
+<div class="recmask" id="recMask">
+  <div class="recbox">
+    <div class="recwave"><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="rectime" id="recTime">0.0"</div>
+    <div class="rectip">松开结束 · 正在听你说话</div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="workbuddy-cloud-sdk.js"></script>
+<script>
+'use strict';
+/* ================= 配置 =================
+   真实参数放在 config.js（不进代码仓库），模板见 config.example.js */
+const PUBLIC_CONFIG = window.APP_CONFIG || {};
+const CONFIGURED = !!(PUBLIC_CONFIG.endpoint && PUBLIC_CONFIG.publishableKey);
+const FAMILY_ID = 'demo-family'; // 家庭共享数据标识（免登录直接读写）
+
+let cloud = null, MODEL = null;
+
+/* ================= 小工具 ================= */
+const $ = (id) => document.getElementById(id);
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(t._tm); t._tm = setTimeout(()=>t.classList.remove('on'), 2600);
+}
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function fmtTime(iso){
+  try { const d = new Date(iso); return (d.getMonth()+1)+'月'+d.getDate()+'日 '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+  catch(e){ return ''; }
+}
+function extractJSON(s){
+  if (!s) throw new Error('empty');
+  let t = s.trim().replace(/^```(json)?/,'').replace(/```$/,'').trim();
+  const a = t.indexOf('{'), b = t.lastIndexOf('}');
+  if (a >= 0 && b > a) t = t.slice(a, b+1);
+  return JSON.parse(t);
+}
+function llmErrorText(e){
+  if (!CONFIGURED) return '还没配置云服务，请按 README 填写 config.js';
+  const code = (e && e.error && e.error.code) || '';
+  if (code.startsWith('quota_')) return '使用额度暂时受限，请稍后再试';
+  if (code.startsWith('auth_')) return '服务配置异常，请检查 config.js';
+  if (code.startsWith('gateway_') || code.startsWith('model_')) return 'AI 服务暂时不可用，请重试';
+  return '网络好像不太顺畅，请重试';
+}
+
+/* ================= 视图切换（支持手机返回键） ================= */
+let navPushed = 0;
+const SUB_VIEWS = ['menu', 'check', 'symptom', 'profile'];
+const VIEW_TITLES = {
+  home: '饮食管家', menu: '今日菜谱', check: '这个能吃吗',
+  symptom: '不舒服怎么办', profile: '健康档案'
+};
+
+function enterView(view){
+  if (view === 'menu') loadMenu();
+  if (view === 'profile') {
+    $('wDate').value = todayStr();
+    loadProfileForm(); loadWeights(); loadRecords();
+  }
+}
+function show(view, opts){
+  opts = opts || {};
+  const el = $('view-' + view);
+  if (!el) return;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('on'));
+  el.classList.add('on');
+  window.scrollTo(0, 0);
+  const tb = $('topBack');
+  if (tb) tb.classList.toggle('is-ghost', view === 'home');
+  const tt = $('topTitle');
+  if (tt) tt.textContent = VIEW_TITLES[view] || VIEW_TITLES.home;
+  if (opts.push !== false) {
+    navPushed++;
+    try { history.pushState({ view: view }, '', '#' + view); } catch (e) {}
+  } else {
+    try { history.replaceState({ view: view }, '', '#' + view); } catch (e) {}
+  }
+  if (opts.enter !== false) enterView(view);
+}
+function currentView(){
+  const v = document.querySelector('.view.on');
+  return v ? v.id.replace('view-', '') : 'home';
+}
+function go(view){
+  if (currentView() === view) return;
+  show(view);
+}
+function goHome(){
+  // 优先走浏览器历史，这样手机返回键和页面按钮行为一致
+  if (navPushed > 0) { try { history.back(); return; } catch (e) {} }
+  show('home', { push: false });
+}
+window.addEventListener('popstate', (ev) => {
+  const v = (ev.state && ev.state.view) || 'home';
+  if (navPushed > 0) navPushed--;
+  show(v, { push: false, enter: true });
+});
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-go]');
+  if (!el) return;
+  const to = el.dataset.go;
+  if (to === 'home') { goHome(); return; }
+  go(to);
+});
+(function initNav(){
+  const tb = $('topBack');
+  if (tb) tb.addEventListener('click', goHome);
+  const tt = $('topTitle');
+  if (tt) tt.addEventListener('click', goHome);
+  // 刷新后停留在原来那个栏目
+  const h = (location.hash || '').replace('#', '');
+  if (SUB_VIEWS.indexOf(h) >= 0) show(h, { push: false });
+})();
+
+/* ================= 云端初始化（免登录） ================= */
+function showSetupHint(){
+  const home = $('view-home');
+  if (!home || $('setupHint')) return;
+  const box = document.createElement('div');
+  box.id = 'setupHint';
+  box.className = 'alert';
+  box.style.background = '#FFF8E6';
+  box.style.borderColor = '#F0DCA8';
+  box.style.color = '#8A5A00';
+  box.innerHTML = '<span class="aic">🔧</span><span>还没配置云服务，AI 功能暂时用不了：把 <b>config.example.js</b> 复制成 <b>config.js</b> 并填入你的参数（详见 README）。</span>';
+  home.insertBefore(box, home.firstChild);
+}
+async function initCloud(){
+  if (!CONFIGURED) { showSetupHint(); return; }
+  if (!window.WorkBuddyCloud || !WorkBuddyCloud.createWorkBuddyCloud) {
+    toast('核心组件加载失败，请检查网络后刷新');
+    return;
+  }
+  cloud = WorkBuddyCloud.createWorkBuddyCloud({
+    endpoint: PUBLIC_CONFIG.endpoint,
+    oauthRelayBaseUrl: PUBLIC_CONFIG.oauthRelayBaseUrl,
+    publishableKey: PUBLIC_CONFIG.publishableKey
+  });
+  try {
+    const models = await cloud.llm.models.list();
+    if (!Array.isArray(models) || models.length === 0) {
+      toast('当前没有可用的 AI 模型，请到云服务后台检查');
+      return;
+    }
+    const pref = ['fast-model', 'auto', 'glm-5.3-flash'];
+    MODEL = null;
+    for (const id of pref) {
+      const m = models.find(x => x.id === id && x.disabled !== true && x.supportsImages !== false);
+      if (m) { MODEL = m.id; break; }
+    }
+    if (!MODEL) {
+      const m = models.find(x => x.disabled !== true && x.supportsImages !== false)
+             || models.find(x => x.disabled !== true);
+      MODEL = m ? m.id : null;
+    }
+    if (!MODEL) toast('当前没有可用的 AI 模型，请到云服务后台检查');
+  } catch (e) {
+    toast('AI 服务连接失败，请稍后刷新重试');
+  }
+}
+
+/* ================= LLM 调用 ================= */
+async function llm(messages, opts){
+  if (!cloud || !MODEL) throw {error:{code:'model_unavailable'}};
+  let out = '';
+  const req = { model: MODEL, messages, stream: true };
+  if (opts && opts.temperature) req.temperature = opts.temperature;
+  for await (const chunk of cloud.llm.chat.completions.create(req)) {
+    const d = chunk.choices && chunk.choices[0] && chunk.choices[0].delta;
+    if (d && d.content) out += d.content;
+  }
+  return out;
+}
+
+/* ================= 健康档案 ================= */
+const PKEY = 'dietProfile';
+function getProfile(){
+  try { return JSON.parse(localStorage.getItem(PKEY) || '{}'); } catch(e){ return {}; }
+}
+function setProfile(p){
+  try { localStorage.setItem(PKEY, JSON.stringify(p)); } catch(e){}
+}
+function profileSummary(){
+  const p = getProfile();
+  const bits = [];
+  bits.push('患者：' + (p.name || '（未填写称呼）'));
+  if (p.age) bits.push('年龄 ' + p.age + ' 岁');
+  if (p.weight) bits.push('体重 ' + p.weight + ' 公斤' + (p.weightDate ? '（' + p.weightDate + ' 称的）' : ''));
+  if (p.weightTrend) bits.push('近期体重记录：' + p.weightTrend);
+  bits.push('病情：胰腺炎，刚出院处于恢复期');
+  if (p.stage) bits.push('目前饮食阶段：' + p.stage);
+  if (p.discharge) bits.push('出院时间：约 ' + p.discharge);
+  if (p.allergy) bits.push('过敏或吃了不舒服的：' + p.allergy);
+  if (p.other) bits.push('合并其他疾病：' + p.other);
+  if (p.notes) bits.push('医生嘱咐/备注：' + p.notes);
+  return bits.join('；');
+}
+/* 档案内容指纹：档案一变，今日菜谱就重新安排 */
+function profileSig(){
+  const p = getProfile();
+  return [p.name||'', p.age||'', p.weight||'', p.stage||'', p.allergy||'', p.other||'', p.notes||''].join('|');
+}
+/* 生成菜谱前，把云端档案和最新体重拉下来，确保菜谱用的是最新数据 */
+async function syncProfile(){
+  if (!cloud) return;
+  try {
+    const q = await cloud.database.from('health_profiles').select('content').limit(1).maybeSingle();
+    if (!q.error && q.data && q.data.content) {
+      const cur = getProfile();
+      const cloudP = q.data.content || {};
+      const a = cur.savedAt ? Date.parse(cur.savedAt) : 0;
+      const b = cloudP.savedAt ? Date.parse(cloudP.savedAt) : 0;
+      // 谁更新用谁（本机填的也不会被旧云端数据覆盖）
+      setProfile(b >= a ? Object.assign({}, cur, cloudP) : cur);
+    }
+  } catch (e) {}
+  try {
+    const w = await cloud.database.from('weight_logs').select('weight_kg,weigh_date')
+      .order('created_at', { ascending: false }).limit(6);
+    if (!w.error && Array.isArray(w.data) && w.data.length) {
+      const p = getProfile();
+      p.weight = String(w.data[0].weight_kg);
+      p.weightDate = w.data[0].weigh_date || '';
+      p.weightTrend = w.data.map(x => x.weight_kg + '公斤(' + (x.weigh_date || '') + ')').join('、');
+      setProfile(p);
+    }
+  } catch (e) {}
+}
+async function loadProfileForm(){
+  await syncProfile();  // 云端档案与最新体重
+  const p = getProfile();
+  $('pName').value = p.name || ''; $('pAge').value = p.age || ''; $('pWeight').value = p.weight || '';
+  $('pStage').value = p.stage || ''; $('pDischarge').value = p.discharge || '';
+  $('pAllergy').value = p.allergy || ''; $('pOther').value = p.other || ''; $('pNotes').value = p.notes || '';
+}
+$('btnSaveProfile').addEventListener('click', async () => {
+  const old = getProfile();
+  const p = {
+    name: $('pName').value.trim(), age: $('pAge').value.trim(), weight: $('pWeight').value.trim(),
+    stage: $('pStage').value, discharge: $('pDischarge').value.trim(),
+    allergy: $('pAllergy').value.trim(), other: $('pOther').value.trim(), notes: $('pNotes').value.trim(),
+    weightDate: old.weightDate || '', weightTrend: old.weightTrend || '',
+    savedAt: new Date().toISOString()
+  };
+  setProfile(p);
+  // 档案变了，今日菜谱下次打开时按新数据重排
+  try { localStorage.removeItem('dietMenuCache'); } catch (e) {}
+  if (!cloud) { toast('档案已保存在本机，今日菜谱会按新档案安排'); return; }
+  try {
+    const q = await cloud.database.from('health_profiles').select('id').limit(1).maybeSingle();
+    if (q.error) throw q.error;
+    let r;
+    if (q.data && q.data.id) {
+      r = await cloud.database.from('health_profiles')
+        .update({ content: p, owner_id: FAMILY_ID, updated_at: new Date().toISOString() })
+        .eq('id', q.data.id).select();
+    } else {
+      r = await cloud.database.from('health_profiles')
+        .insert({ content: p, owner_id: FAMILY_ID }).select();
+    }
+    if (r.error) throw r.error;
+    toast('档案已保存，今日菜谱会按新档案安排');
+  } catch (e) {
+    toast('档案已保存在本机，今日菜谱会按新档案安排');
+  }
+});
+
+/* ================= 今日菜谱 ================= */
+const DIET_RULES = [
+  '1. 严格低脂：每日脂肪总量控制在30克左右，恢复早期更低；',
+  '2. 绝对禁止酒精，包括啤酒、黄酒、料酒烹饪的菜；',
+  '3. 禁止：油炸食品、肥肉、五花肉、动物内脏、猪油黄油、奶油糕点、坚果、油炸零食、辛辣刺激、浓茶咖啡、碳酸饮料；',
+  '4. 少食多餐：一天5-6餐，每餐七分饱，细嚼慢咽；',
+  '5. 主食以易消化的为主：小米粥、大米粥、烂面条、馒头、软米饭；',
+  '6. 蛋白选低脂来源：蒸蛋清、去皮鸡肉、清蒸鱼、嫩豆腐，适量添加；',
+  '7. 蛋黄每周不超过2-3个；蔬菜选低纤维的煮软去渣；水果少量、去皮、不冰；',
+  '8. 所有菜用蒸、煮、炖、白灼做法，几乎不放油或只滴几滴'
+].join('\n');
+
+async function loadMenu(){
+  const body = $('menuBody');
+  body.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'loading';
+  const sp = document.createElement('div'); sp.className = 'spin';
+  const tx = document.createElement('div'); tx.textContent = '正在安排今天的菜谱…';
+  box.append(sp, tx); body.appendChild(box);
+  // 先同步健康档案（年龄体重等），再决定用什么菜谱
+  await syncProfile();
+  const sig = profileSig();
+  // 本机当日缓存（档案没变就直接用，避免重复消耗 AI）
+  try {
+    const c = JSON.parse(localStorage.getItem('dietMenuCache') || 'null');
+    if (c && c.date === todayStr() && c.plan && c.sig === sig) { renderMenu(c.plan, true); return; }
+  } catch (e) {}
+  // 云端当日记录
+  if (cloud) {
+    try {
+      const q = await cloud.database.from('meal_plans').select('content')
+        .eq('plan_date', todayStr()).order('created_at', { ascending: false }).limit(1).maybeSingle();
+      if (!q.error && q.data && q.data.content && q.data.content._sig === sig) {
+        renderMenu(q.data.content, true);
+        try { localStorage.setItem('dietMenuCache', JSON.stringify({ date: todayStr(), plan: q.data.content, sig })); } catch (e) {}
+        return;
+      }
+    } catch (e) { /* 落到重新生成 */ }
+  }
+  await generateMenu();
+}
+async function generateMenu(){
+  const body = $('menuBody');
+  body.innerHTML = '';
+  const box = document.createElement('div');
+  box.className = 'loading';
+  const sp = document.createElement('div'); sp.className = 'spin';
+  const tx = document.createElement('div'); tx.textContent = '正在安排今天的菜谱…';
+  box.append(sp, tx); body.appendChild(box);
+  try {
+    const sys = '你是资深临床营养师，为一位胰腺炎出院恢复期患者安排每日菜谱，使用者是照护他的老年家属。'
+      + '只能依据以下背景和饮食原则，并且只输出一个 JSON 对象，不要输出任何其他文字。\n'
+      + '【患者背景】' + profileSummary() + '\n【饮食原则】\n' + DIET_RULES + '\n'
+      + '【科学定量】根据患者年龄和体重估算需求：恢复期低脂饮食下每日总热量约按每公斤体重25-28千卡安排，'
+      + '蛋白质约每公斤体重1-1.2克（优先蛋清、去皮鸡肉、鱼、豆腐等低脂来源），把总量合理分配到5餐，'
+      + '恢复早期（流质/半流质阶段）取低值、以易消化为主。若背景里没有体重或年龄，就按60公斤、60岁的中等体型估算。\n'
+      + '【输出格式】{"meals":[{"time":"早餐","items":[{"name":"食物名","grams":"具体克重，如200克","detail":"简单做法"}],"note":"本餐要点一句话"}],'
+      + '"daily_tips":"给家属的一句贴心提醒（饮食相关）"}\n'
+      + '要求：\n'
+      + '1. 依次包含早餐、上午加餐、午餐、下午加餐、晚餐共5餐；每餐2-3样；\n'
+      + '2. 每样食物必须给出具体克重（如：小米粥200克、蛋清1个约40克、去皮鸡肉50克），方便照着做；\n'
+      + '3. 在严格低脂的前提下尽量做得好吃：善用葱、姜、番茄、香菇、冬瓜、少许盐、几滴香油等提味，'
+      + '做法可以是番茄蛋花汤、香菇蒸鸡、清蒸鱼淋少许生抽等家常口味，不要安排没味道的纯水煮；\n'
+      + '4. 食材在中国普通菜市场/超市容易买到；做法简单适合老年家属操作；三餐尽量不重样、有干有稀。';
+    const out = await llm([
+      { role: 'system', content: sys },
+      { role: 'user', content: '今天是' + todayStr() + '，请安排今天的菜谱。' }
+    ]);
+    const plan = extractJSON(out);
+    const sig = profileSig();
+    plan._sig = sig;
+    renderMenu(plan, false);
+    try { localStorage.setItem('dietMenuCache', JSON.stringify({ date: todayStr(), plan, sig })); } catch (e) {}
+    // 云端留档（可在后台查看）
+    if (cloud) {
+      try {
+        const i = await cloud.database.from('meal_plans')
+          .insert({ owner_id: FAMILY_ID, plan_date: todayStr(), content: plan }).select();
+        if (i.error) throw i.error;
+      } catch (e) {}
+    }
+  } catch (e) {
+    body.innerHTML = '';
+    const c = document.createElement('div'); c.className = 'card';
+    const p = document.createElement('p'); p.textContent = llmErrorText(e);
+    const b = document.createElement('button'); b.className = 'btn btn-green btn-block';
+    b.style.marginTop = '.8rem'; b.textContent = '再试一次';
+    b.addEventListener('click', () => { body.innerHTML = ''; generateMenu(); });
+    c.append(p, b); body.appendChild(c);
+  }
+}
+function renderMenu(plan, fromCache){
+  const body = $('menuBody');
+  body.innerHTML = '';
+  if (!plan || !Array.isArray(plan.meals)) { toast('菜谱格式异常，请点“换一份”重试'); return; }
+  const wrap = document.createElement('div');
+  wrap.className = 'card';
+  // 卡片头：日期 + 餐数
+  const dt = new Date();
+  const top = document.createElement('div'); top.className = 'menutop';
+  const topL = document.createElement('div'); topL.className = 'mtitle'; topL.textContent = '今天的安排';
+  const topR = document.createElement('div'); topR.className = 'mdate';
+  topR.textContent = (dt.getMonth()+1) + '月' + dt.getDate() + '日 · ' + plan.meals.length + ' 餐';
+  top.append(topL, topR);
+  wrap.appendChild(top);
+  for (const meal of plan.meals) {
+    const m = document.createElement('div'); m.className = 'meal';
+    const t = document.createElement('div'); t.className = 'mt'; t.textContent = (meal.time || '') ;
+    m.appendChild(t);
+    if (Array.isArray(meal.items)) {
+      for (const it of meal.items) {
+        const i = document.createElement('div'); i.className = 'mi';
+        let html = '· ' + (it.name || '');
+        if (it.grams) {
+          const g = document.createElement('span'); g.className = 'g'; g.textContent = '（' + it.grams + '）';
+          i.textContent = '';
+          i.append(document.createTextNode('· ' + (it.name || '') + ' '), g);
+        } else {
+          i.textContent = html;
+        }
+        if (it.detail) i.append(document.createTextNode('：' + it.detail));
+        m.appendChild(i);
+      }
+    }
+    if (meal.note) { const n = document.createElement('div'); n.className = 'mn'; n.textContent = meal.note; m.appendChild(n); }
+    wrap.appendChild(m);
+  }
+  body.appendChild(wrap);
+  if (plan.daily_tips) {
+    const tip = document.createElement('div'); tip.className = 'card';
+    tip.style.background = 'var(--green-light)';
+    const h = document.createElement('div'); h.style.fontWeight = '700'; h.style.marginBottom = '.3rem';
+    h.textContent = '💡 今日提醒';
+    const p = document.createElement('p'); p.style.fontSize = '.95rem';
+    p.textContent = plan.daily_tips;
+    tip.append(h, p);
+    body.appendChild(tip);
+  }
+  const prof = getProfile();
+  if (!prof.age || !prof.weight) {
+    const tip = document.createElement('div');
+    tip.className = 'card';
+    tip.style.background = '#FFF8E6';
+    const p1 = document.createElement('p');
+    p1.style.fontSize = '.92rem';
+    p1.textContent = '还没填年龄和体重，这份菜谱是按 60 岁、60 公斤估算的。填好健康档案后，菜谱会按家人的真实情况定量。';
+    const b = document.createElement('button');
+    b.className = 'btn btn-light btn-block';
+    b.style.marginTop = '.6rem';
+    b.style.background = '#fff';
+    b.textContent = '去填健康档案';
+    b.addEventListener('click', () => go('profile'));
+    tip.append(p1, b);
+    body.appendChild(tip);
+  }
+  const row = document.createElement('div'); row.className = 'frow';
+  const b1 = document.createElement('button'); b1.className = 'btn btn-green'; b1.style.flex = '1'; b1.textContent = '🔄 换一份菜谱';
+  b1.addEventListener('click', () => generateMenu());
+  row.append(b1); body.appendChild(row);
+  const n = document.createElement('p'); n.className = 'footnote';
+  n.textContent = fromCache ? '今天已经安排过，点“换一份菜谱”可以重新安排' : '菜谱按健康档案里的年龄、体重、饮食阶段定量安排';
+  body.appendChild(n);
+}
+
+/* ================= 能吃吗 ================= */
+let checkImage = null; // dataURL
+$('btnPhoto').addEventListener('click', () => $('filePhoto').click());
+$('filePhoto').addEventListener('change', (ev) => {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  downscale(f, (dataUrl) => {
+    checkImage = dataUrl;
+    const prev = $('imgPrev'); prev.innerHTML = '';
+    const img = document.createElement('img'); img.src = dataUrl; prev.appendChild(img);
+    $('btnCheck').disabled = false;
+  });
+  ev.target.value = '';
+});
+function downscale(file, cb){
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 1024;
+      let w = img.width, h = img.height;
+      if (Math.max(w, h) > MAX) { const r = MAX / Math.max(w, h); w = Math.round(w*r); h = Math.round(h*r); }
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      try { cb(c.toDataURL('image/jpeg', 0.82)); }
+      catch (e) { cb(reader.result); }
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+}
+$('btnCheck').addEventListener('click', async () => {
+  if (!checkImage) { toast('请先拍照或选择照片'); return; }
+  const res = $('checkResult'); res.innerHTML = '';
+  const btn = $('btnCheck'); btn.disabled = true; btn.textContent = 'AI 正在看图…';
+  try {
+    const sys = '你是胰腺炎患者的饮食安全审核员。家属拍一张食物、菜品或商品的照片（可能附一句补充说明），'
+      + '你要识别图中是什么，并判断胰腺炎恢复期患者能不能吃。只输出一个 JSON 对象，不要任何其他文字。\n'
+      + '【患者背景】' + profileSummary() + '\n【判断依据】\n' + DIET_RULES + '\n'
+      + '【输出格式】{"name":"识别到的食物或商品名","verdict":"可以吃|慎吃|不能吃","reason":"给老年家属听的判断理由，口语化",'
+      + '"suggestion":"怎么吃、吃多少（给出具体克数或份数），或更安全的替代","confidence":"高|中|低"}\n'
+      + '【判定规则】含酒精或料酒、油炸、肥肉、动物内脏、坚果、奶油糕点、辛辣刺激 → 不能吃；'
+      + '含一定脂肪但少量或许可以（瘦肉、蛋黄、少量油的菜、部分乳制品） → 慎吃，必须给出安全量；'
+      + '低脂清淡易消化 → 可以吃。图片不清晰无法确定时，confidence 给低，suggestion 里说明重新拍一张。';
+    const content = [
+      { type: 'text', text: '请判断这个能不能吃' + ($('checkText').value.trim() ? '。补充说明：' + $('checkText').value.trim() : '') },
+      { type: 'image_url', image_url: { url: checkImage } }
+    ];
+    const out = await llm([{ role: 'system', content: sys }, { role: 'user', content }], { temperature: 0.4 });
+    renderVerdict(extractJSON(out));
+  } catch (e) {
+    const c = document.createElement('div'); c.className = 'card';
+    const p = document.createElement('p'); p.textContent = llmErrorText(e);
+    const b = document.createElement('button'); b.className = 'btn btn-green btn-block';
+    b.style.marginTop = '.8rem'; b.textContent = '再试一次';
+    b.addEventListener('click', () => $('btnCheck').click());
+    c.append(p, b); res.appendChild(c);
+  } finally {
+    btn.disabled = false; btn.textContent = '开始识别';
+  }
+});
+function renderVerdict(v){
+  const res = $('checkResult'); res.innerHTML = '';
+  if (!v || !v.verdict) { toast('识别结果异常，请再试'); return; }
+  const map = { '可以吃': ['v-ok', '✅ 可以吃'], '慎吃': ['v-warn', '⚠️ 慎吃'], '不能吃': ['v-bad', '🚫 不能吃'] };
+  const info = map[v.verdict] || ['v-unk', '🤔 ' + (v.verdict || '结果不明')];
+  const big = document.createElement('div'); big.className = 'verdict ' + info[0];
+  big.textContent = info[1];
+  res.appendChild(big);
+  const card = document.createElement('div'); card.className = 'card';
+  const mkKV = (k, val) => {
+    const w = document.createElement('div'); w.className = 'kv';
+    const kk = document.createElement('div'); kk.className = 'k'; kk.textContent = k;
+    const vv = document.createElement('div'); vv.className = 'v'; vv.textContent = val || '—';
+    w.append(kk, vv); return w;
+  };
+  card.appendChild(mkKV('识别结果', v.name));
+  card.appendChild(mkKV('为什么', v.reason));
+  card.appendChild(mkKV('建议', v.suggestion));
+  if (v.confidence === '低') {
+    const p = document.createElement('p'); p.style.cssText = 'color:var(--warn);font-size:.85rem';
+    p.textContent = '图片可能不太清楚，建议靠近一点再拍一张确认';
+    card.appendChild(p);
+  }
+  res.appendChild(card);
+}
+
+/* ================= 按住说话（录音 → 本应用识别服务 → 文字） ================= */
+const SYMPTOM_CHIPS = ['肚子疼','肚子胀','恶心','想吐','发烧','没胃口','拉肚子','后背疼','头晕没力气','吃了油腻的','疼了半小时','没有大便'];
+(function initChips(){
+  const box = $('symptomChips');
+  if (!box) return;
+  for (const t of SYMPTOM_CHIPS) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = t;
+    b.addEventListener('click', () => {
+      const ta = $('symptomText');
+      const cur = ta.value.replace(/[，,、\s]+$/, '');
+      ta.value = cur ? (cur + '，' + t) : t;
+    });
+    box.appendChild(b);
+  }
+})();
+
+let talkStream = null, talkCtx = null, talkProc = null, talkSrc = null, talkMute = null;
+let talkChunks = [], talkStart = 0, talkTimer = null;
+let talkRecording = false, talkPressing = false, talkBusy = false;
+
+function talkLabel(s){ const el = $('talkText'); if (el) el.textContent = s; }
+function showRecMask(on){ $('recMask').classList.toggle('on', !!on); }
+function releaseAudio(){
+  try { if (talkStream) talkStream.getTracks().forEach(t => t.stop()); } catch(e){}
+  try { if (talkProc) talkProc.disconnect(); } catch(e){}
+  try { if (talkSrc) talkSrc.disconnect(); } catch(e){}
+  try { if (talkMute) talkMute.disconnect(); } catch(e){}
+  try { if (talkCtx && talkCtx.state !== 'closed') talkCtx.close(); } catch(e){}
+  talkStream = null; talkCtx = null; talkProc = null; talkSrc = null; talkMute = null;
+}
+
+async function startRecording(){
+  if (talkRecording || talkBusy) return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    talkPressing = false;
+    toast('这个浏览器不能录音，请直接点下面的常用情况或打字');
+    return;
+  }
+  try {
+    talkStream = await navigator.mediaDevices.getUserMedia({
+      audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+    });
+  } catch (e) {
+    talkPressing = false;
+    toast('没有拿到麦克风权限，请在浏览器里点“允许”');
+    return;
+  }
+  if (!talkPressing) { releaseAudio(); return; }  // 松手太快，放弃这次录音
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    talkCtx = new AC();
+    if (talkCtx.state === 'suspended') { try { await talkCtx.resume(); } catch(e){} }
+    talkSrc = talkCtx.createMediaStreamSource(talkStream);
+    talkProc = talkCtx.createScriptProcessor(2048, 1, 1);
+    talkChunks = [];
+    talkProc.onaudioprocess = (ev) => {
+      if (!talkRecording) return;
+      talkChunks.push(new Float32Array(ev.inputBuffer.getChannelData(0)));
+      if (Date.now() - talkStart > 60000) stopRecording();   // 最长 60 秒
+    };
+    talkMute = talkCtx.createGain();
+    talkMute.gain.value = 0;
+    talkSrc.connect(talkProc);
+    talkProc.connect(talkMute);
+    talkMute.connect(talkCtx.destination);
+    talkRecording = true;
+    talkStart = Date.now();
+    $('btnTalk').classList.add('on');
+    talkLabel('正在听… 松开结束');
+    $('recTime').textContent = '0.0"';
+    showRecMask(true);
+    clearInterval(talkTimer);
+    talkTimer = setInterval(() => {
+      $('recTime').textContent = ((Date.now() - talkStart) / 1000).toFixed(1) + '"';
+    }, 100);
+    if (navigator.vibrate) { try { navigator.vibrate(30); } catch(e){} }
+  } catch (e) {
+    releaseAudio();
+    talkPressing = false;
+    toast('录音启动失败，可以直接点下面的常用情况');
+  }
+}
+
+async function stopRecording(cancel){
+  if (!talkRecording) return;
+  talkRecording = false;
+  clearInterval(talkTimer);
+  showRecMask(false);
+  const btn = $('btnTalk');
+  if (btn) btn.classList.remove('on');
+  talkLabel('按住 说话');
+  const rate = talkCtx ? talkCtx.sampleRate : 16000;
+  const chunks = talkChunks.slice();
+  talkChunks = [];
+  const dur = (Date.now() - talkStart) / 1000;
+  releaseAudio();
+  if (cancel) return;
+  if (dur < 0.6 || !chunks.length) { toast('说话太短了，按住多说几句'); return; }
+  const blob = encodeWav(chunks, rate);
+  if (blob.size < 3000) { toast('好像没录到声音，再试一次'); return; }
+  talkBusy = true;
+  talkLabel('正在识别…');
+  const hint = $('micHint');
+  if (hint) hint.textContent = '正在把语音变成文字，稍等一下…';
+  try {
+    const resp = await fetch('./api/asr', {
+      method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: blob
+    });
+    if (!resp.ok) throw new Error('http ' + resp.status);
+    const j = await resp.json();
+    if (j.error) throw new Error(j.error);
+    const txt = (j.text || '').trim();
+    if (!txt) {
+      toast('没听清，再说一次好吗');
+    } else {
+      const ta = $('symptomText');
+      const cur = ta.value.replace(/[，,、\s]+$/, '');
+      ta.value = cur ? (cur + '，' + txt) : txt;
+      toast('已变成文字，看看对不对');
+    }
+  } catch (e) {
+    toast('语音识别没成功，可以直接点下面的常用情况，或用键盘上的🎤');
+  } finally {
+    talkBusy = false;
+    talkLabel('按住 说话');
+    if (hint) hint.textContent = '松开后等 1-3 秒，说过的话会变成文字出现在下面框里';
+  }
+}
+
+function encodeWav(chunks, inRate){
+  let total = 0;
+  for (const c of chunks) total += c.length;
+  const merged = new Float32Array(total);
+  let o = 0;
+  for (const c of chunks) { merged.set(c, o); o += c.length; }
+  const outRate = 16000;
+  const ratio = inRate / outRate;
+  const outLen = Math.max(1, Math.floor(merged.length / ratio));
+  const out = new Float32Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const s = Math.floor(i * ratio), e = Math.min(merged.length, Math.floor((i + 1) * ratio));
+    let sum = 0, n = 0;
+    for (let j = s; j < e; j++) { sum += merged[j]; n++; }
+    out[i] = n ? sum / n : 0;
+  }
+  const buf = new ArrayBuffer(44 + outLen * 2);
+  const v = new DataView(buf);
+  const ws = (off, str) => { for (let i = 0; i < str.length; i++) v.setUint8(off + i, str.charCodeAt(i)); };
+  ws(0, 'RIFF'); v.setUint32(4, 36 + outLen * 2, true); ws(8, 'WAVE'); ws(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, outRate, true); v.setUint32(28, outRate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  ws(36, 'data'); v.setUint32(40, outLen * 2, true);
+  let off = 44;
+  for (let i = 0; i < outLen; i++) {
+    const s = Math.max(-1, Math.min(1, out[i]));
+    v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+    off += 2;
+  }
+  return new Blob([v], { type: 'audio/wav' });
+}
+
+const talkBtn = $('btnTalk');
+if (talkBtn) {
+  const begin = (ev) => {
+    if (ev && ev.cancelable) ev.preventDefault();
+    if (talkPressing) return;
+    talkPressing = true;
+    startRecording();
+  };
+  const end = (cancel) => {
+    if (!talkPressing) return;
+    talkPressing = false;
+    stopRecording(cancel);
+  };
+  if (window.PointerEvent) {
+    talkBtn.addEventListener('pointerdown', (ev) => {
+      if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+      begin(ev);
+    });
+    window.addEventListener('pointerup', () => end(false));
+    window.addEventListener('pointercancel', () => end(true));
+  }
+  talkBtn.addEventListener('touchstart', (ev) => { if (!window.PointerEvent) begin(ev); }, { passive: false });
+  talkBtn.addEventListener('mousedown', (ev) => { if (!window.PointerEvent) begin(ev); });
+  window.addEventListener('touchend', () => { if (!window.PointerEvent) end(false); });
+  window.addEventListener('touchcancel', () => { if (!window.PointerEvent) end(true); });
+  window.addEventListener('mouseup', () => { if (!window.PointerEvent) end(false); });
+  // 手指按住后移出按钮也不取消，符合微信习惯
+  talkBtn.addEventListener('contextmenu', (ev) => ev.preventDefault());
+}
+
+$('btnSymptom').addEventListener('click', async () => {
+  const txt = $('symptomText').value.trim();
+  if (!txt) { toast('请先描述一下现在的情况'); return; }
+  const res = $('symptomResult'); res.innerHTML = '';
+  const btn = $('btnSymptom'); btn.disabled = true; btn.textContent = 'AI 正在分析…';
+  try {
+    const sys = '你是面向胰腺炎出院患者家属的健康观察助手（不是医生）。家属用口语描述患者当前的不适，'
+      + '你基于胰腺炎恢复期的医学常识给出参考建议、观察要点和需要立即就医的信号。你的回答不能替代医生诊断。'
+      + '只输出一个 JSON 对象，不要任何其他文字。\n'
+      + '【患者背景】' + profileSummary() + '\n'
+      + '【输出格式】{"severity":"紧急|尽快就诊|可先观察","summary":"一句话说明现在大概什么情况、严不严重",'
+      + '"advice":["现在能做的处理1","现在能做的处理2","接下来观察什么、观察多久"],'
+      + '"red_flags":["如果出现情况X要立即就医","情况Y"],'
+      + '"diet_note":"这次不舒服期间饮食怎么处理（比如先停一顿、只喝米汤等）"}\n'
+      + '【判断规则】出现以下任一情况 severity 必须是“紧急”：剧烈或持续加重的腹痛、频繁呕吐、发烧、'
+      + '眼白或皮肤发黄、心跳很快、出汗脸色差、精神萎靡模糊；轻度腹胀、短暂轻微隐痛、食欲差、'
+      + '轻微恶心 → “可先观察”或“尽快就诊”；拿不准时往严重的一档靠，宁可多提醒。';
+    const out = await llm([
+      { role: 'system', content: sys },
+      { role: 'user', content: '家属描述：' + txt }
+    ], { temperature: 0.3 });
+    const r = extractJSON(out);
+    renderSymptom(r, txt);
+  } catch (e) {
+    const c = document.createElement('div'); c.className = 'card';
+    const p = document.createElement('p'); p.textContent = llmErrorText(e);
+    const b = document.createElement('button'); b.className = 'btn btn-green btn-block';
+    b.style.marginTop = '.8rem'; b.textContent = '再试一次';
+    b.addEventListener('click', () => $('btnSymptom').click());
+    c.append(p, b); res.appendChild(c);
+  } finally {
+    btn.disabled = false; btn.textContent = '问问 AI 怎么办';
+  }
+});
+function renderSymptom(r, rawText){
+  const res = $('symptomResult'); res.innerHTML = '';
+  if (!r || !r.severity) { toast('结果异常，请重试'); return; }
+  if (r.severity === '紧急') {
+    const a = document.createElement('div'); a.className = 'alert';
+    a.style.cssText = 'text-align:center;font-size:1.05rem';
+    a.textContent = '🚨 建议立即就医或拨打 120，不要拖延、不要先吃饭喝水';
+    res.appendChild(a);
+  }
+  const card = document.createElement('div'); card.className = 'card';
+  const sevMap = { '紧急': ['sev-emergency', '🔴 紧急 · 立即就医'], '尽快就诊': ['sev-soon', '🟠 尽快去医院'], '可先观察': ['sev-watch', '🟢 可以先在家观察'] };
+  const sv = sevMap[r.severity] || ['sev-watch', r.severity];
+  const badge = document.createElement('span'); badge.className = 'sev ' + sv[0]; badge.textContent = sv[1];
+  card.appendChild(badge);
+  if (r.summary) { const p = document.createElement('p'); p.style.marginBottom = '.7rem'; p.textContent = r.summary; card.appendChild(p); }
+  if (Array.isArray(r.advice) && r.advice.length) {
+    const h = document.createElement('h4'); h.textContent = '现在可以这样做'; card.appendChild(h);
+    const ul = document.createElement('ul'); ul.className = 'plain';
+    for (const a of r.advice) { const li = document.createElement('li'); li.textContent = a; ul.appendChild(li); }
+    card.appendChild(ul);
+  }
+  if (r.diet_note) {
+    const h = document.createElement('h4'); h.style.marginTop = '.5rem'; h.textContent = '这几顿饭怎么吃'; card.appendChild(h);
+    const p = document.createElement('p'); p.style.fontSize = '.92rem'; p.textContent = r.diet_note; card.appendChild(p);
+  }
+  res.appendChild(card);
+  if (Array.isArray(r.red_flags) && r.red_flags.length) {
+    const rf = document.createElement('div'); rf.className = 'redflags';
+    const h = document.createElement('h4'); h.textContent = '⚠️ 出现这些情况，立即就医';
+    rf.appendChild(h);
+    const ul = document.createElement('ul');
+    for (const x of r.red_flags) { const li = document.createElement('li'); li.textContent = x; ul.appendChild(li); }
+    rf.appendChild(ul);
+    res.appendChild(rf);
+  }
+  // 自动保存记录（云端，可在后台查看）
+  if (cloud) {
+    cloud.database.from('symptom_logs')
+      .insert({ owner_id: FAMILY_ID, symptom_text: rawText, advice_text: JSON.stringify(r), severity: r.severity })
+      .select()
+      .then((i) => {
+        const n = document.createElement('p'); n.className = 'autonote';
+        n.textContent = (i && i.error) ? '本条记录暂存本机，联网时会自动补存' : '✅ 已自动存入健康档案';
+        res.appendChild(n);
+      })
+      .catch(() => {});
+  }
+}
+
+/* ================= 症状记录列表 ================= */
+async function loadRecords(){
+  const body = $('recordsBody');
+  body.innerHTML = '';
+  const box = document.createElement('div'); box.className = 'loading';
+  const sp = document.createElement('div'); sp.className = 'spin';
+  box.appendChild(sp); body.appendChild(box);
+  try {
+    if (!cloud) throw 0;
+    const q = await cloud.database.from('symptom_logs').select('*')
+      .order('created_at', { ascending: false }).limit(50);
+    if (q.error) throw q.error;
+    body.innerHTML = '';
+    if (!q.data || q.data.length === 0) {
+      const e = document.createElement('p'); e.className = 'empty'; e.textContent = '还没有记录。在“不舒服怎么办”里问过后，这里就能看到。';
+      body.appendChild(e); return;
+    }
+    for (const row of q.data) {
+      const recEl = document.createElement('div'); recEl.className = 'rec';
+      const sev = { '紧急': '🔴', '尽快就诊': '🟠', '可先观察': '🟢' }[row.severity] || '⚪';
+      const top = document.createElement('div'); top.className = 'rt';
+      const del = document.createElement('button'); del.className = 'del'; del.textContent = '删除';
+      del.addEventListener('click', async () => {
+        if (!confirm('删除这条记录？删除后找不回来。')) return;
+        try {
+          const d = await cloud.database.from('symptom_logs').delete().eq('id', row.id).select();
+          if (d.error) throw d.error;
+          recEl.remove(); toast('已删除');
+        } catch (e) { toast('删除失败，请重试'); }
+      });
+      top.append(sev + ' ' + fmtTime(row.created_at), del);
+      const s = document.createElement('div'); s.className = 'rs'; s.textContent = row.symptom_text;
+      recEl.append(top, s);
+      try {
+        const advice = JSON.parse(row.advice_text || '{}');
+        const a = document.createElement('div'); a.className = 'ra';
+        a.textContent = '判断：' + (advice.summary || row.severity || '')
+          + '\n建议：' + (Array.isArray(advice.advice) ? advice.advice.join('；') : '');
+        recEl.appendChild(a);
+        recEl.addEventListener('click', () => recEl.classList.toggle('open'));
+      } catch (e) {}
+      body.appendChild(recEl);
+    }
+  } catch (e) {
+    body.innerHTML = '';
+    const p = document.createElement('p'); p.className = 'empty'; p.textContent = '记录加载失败，请稍后再打开';
+    body.appendChild(p);
+  }
+}
+
+/* ================= 体重记录 ================= */
+$('btnSaveWeight').addEventListener('click', async () => {
+  const d = $('wDate').value || todayStr();
+  const v = parseFloat($('wVal').value);
+  if (!v || v < 25 || v > 200) { toast('请输入正确的体重（公斤）'); return; }
+  const btn = $('btnSaveWeight'); btn.disabled = true; btn.textContent = '保存中…';
+  try {
+    if (cloud) {
+      const i = await cloud.database.from('weight_logs')
+        .insert({ owner_id: FAMILY_ID, weight_kg: v, weigh_date: d }).select();
+      if (i.error) throw i.error;
+    }
+    // 本机备份 + 同步档案体重（菜谱定量会用到）
+    try {
+      const arr = JSON.parse(localStorage.getItem('dietWeights') || '[]');
+      arr.push({ d, v, t: new Date().toISOString() });
+      localStorage.setItem('dietWeights', JSON.stringify(arr));
+    } catch (e) {}
+    const p = getProfile();
+    p.weight = String(v); p.weightDate = d;
+    setProfile(p);
+    // 体重变了，今日菜谱下次打开时按新体重量重排
+    try { localStorage.removeItem('dietMenuCache'); } catch (e) {}
+    if (cloud) {
+      try {
+        const q = await cloud.database.from('health_profiles').select('id').limit(1).maybeSingle();
+        if (!q.error && q.data && q.data.id) {
+          await cloud.database.from('health_profiles')
+            .update({ content: p, owner_id: FAMILY_ID, updated_at: new Date().toISOString() })
+            .eq('id', q.data.id).select();
+        }
+      } catch (e) {}
+    }
+    $('wVal').value = '';
+    toast('已记录 ' + v + ' 公斤，菜谱会按新体重量重排');
+    loadWeights();
+  } catch (e) {
+    toast('保存失败，请检查网络后重试');
+  } finally {
+    btn.disabled = false; btn.textContent = '记录体重';
+  }
+});
+async function loadWeights(){
+  const body = $('weightList');
+  body.innerHTML = '';
+  const box = document.createElement('div'); box.className = 'loading';
+  const sp = document.createElement('div'); sp.className = 'spin';
+  box.appendChild(sp); body.appendChild(box);
+  let rows = null;
+  try {
+    if (cloud) {
+      const q = await cloud.database.from('weight_logs').select('*')
+        .order('created_at', { ascending: false }).limit(60);
+      if (!q.error && Array.isArray(q.data)) rows = q.data;
+    }
+  } catch (e) {}
+  if (!rows) {
+    // 云端不可用时用本机备份
+    try { rows = JSON.parse(localStorage.getItem('dietWeights') || '[]')
+      .map((x, idx) => ({ id: -1 - idx, weight_kg: x.v, weigh_date: x.d, created_at: x.t })); } catch (e) { rows = []; }
+  }
+  body.innerHTML = '';
+  if (!rows.length) {
+    const e = document.createElement('p'); e.className = 'empty';
+    e.textContent = '还没有记录。称完体重填上面，点“记录体重”就能存下来。';
+    body.appendChild(e); return;
+  }
+  // 摘要卡
+  const latest = rows[0];
+  const prev = rows[1];
+  const sum = document.createElement('div'); sum.className = 'wsum';
+  let sumTxt = '最近一次：' + (latest.weigh_date || fmtTime(latest.created_at)) + ' <b>' + latest.weight_kg + '</b> 公斤';
+  if (prev) {
+    const diff = Number(latest.weight_kg) - Number(prev.weight_kg);
+    const sign = diff > 0 ? '+' : '';
+    const trend = Math.abs(diff) < 0.05 ? '基本持平' : ('较上次 ' + sign + diff.toFixed(1) + ' 公斤');
+    sum.innerHTML = '';
+    sum.append(document.createTextNode('最近一次 ' + (latest.weigh_date || '') + '：'));
+    const b = document.createElement('b'); b.textContent = latest.weight_kg + ' 公斤';
+    sum.append(b, document.createTextNode(' · ' + trend));
+    if (diff <= -1.5) {
+      const w = document.createElement('div'); w.style.cssText = 'color:var(--warn);font-size:.85rem;margin-top:.3rem';
+      w.textContent = '⚠️ 体重下降比较快，恢复期掉体重明显要留意，下次复诊时告诉医生';
+      sum.appendChild(w);
+    }
+  } else {
+    sum.textContent = '第 1 次记录：' + latest.weight_kg + ' 公斤，以后每次称完都记一下';
+  }
+  body.appendChild(sum);
+  // 列表
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const el = document.createElement('div'); el.className = 'wrow';
+    const wd = document.createElement('div'); wd.className = 'wd';
+    wd.textContent = row.weigh_date || fmtTime(row.created_at);
+    const wv = document.createElement('div'); wv.className = 'wv';
+    wv.textContent = row.weight_kg;
+    const wc = document.createElement('div'); wc.className = 'wc';
+    if (i < rows.length - 1) {
+      const diff = Number(row.weight_kg) - Number(rows[i+1].weight_kg);
+      wc.textContent = Math.abs(diff) < 0.05 ? '持平' : ((diff > 0 ? '+' : '') + diff.toFixed(1) + '公斤');
+    }
+    el.append(wd, wv, wc);
+    if (row.id && row.id > 0) {
+      const del = document.createElement('button'); del.className = 'del'; del.textContent = '删除';
+      del.addEventListener('click', async () => {
+        if (!confirm('删除这条体重记录？')) return;
+        try {
+          const r = await cloud.database.from('weight_logs').delete().eq('id', row.id).select();
+          if (r.error) throw r.error;
+          el.remove(); toast('已删除'); loadWeights();
+        } catch (e) { toast('删除失败，请重试'); }
+      });
+      el.appendChild(del);
+    }
+    body.appendChild(el);
+  }
+}
+
+/* ================= 启动 ================= */
+(function boot(){
+  const d = new Date();
+  const wd = ['日','一','二','三','四','五','六'][d.getDay()];
+  $('todayChip').textContent = (d.getMonth()+1) + ' 月 ' + d.getDate() + ' 日 · 星期' + wd;
+  initCloud();
+})();
+</script>
+</body>
+</html>

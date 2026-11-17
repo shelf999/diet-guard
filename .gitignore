@@ -1,0 +1,25 @@
+# 真实配置（含密钥），不要提交
+config.js
+
+# 语音识别模型：体积 66MB，用 scripts/fetch-asr-model.sh 下载
+asr/vosk-model-small-cn/
+asr/*.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node（可选的验证脚本）
+node_modules/
+package-lock.json
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 本地调试产物
+*.log
+screenshots/
