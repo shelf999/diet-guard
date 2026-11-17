@@ -113,6 +113,11 @@
   label.fl{display:block;font-size:.9rem;font-weight:600;color:var(--text2);margin:.9rem 0 .3rem}
   .frow{display:flex;gap:.8rem}
   .frow>div{flex:1}
+  .curweight{display:flex;align-items:center;gap:.6rem;background:var(--green-light);
+    border-radius:12px;padding:.7rem .9rem;margin-top:1.1rem}
+  .curweight .lb{font-size:.85rem;color:var(--text2);font-weight:600;white-space:nowrap}
+  .curweight .vv{font-size:1.15rem;font-weight:800;color:var(--green-dark)}
+  .curweight .dd{font-size:.78rem;color:var(--text2);margin-left:auto;text-align:right;line-height:1.35;white-space:nowrap}
   .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#333;color:#fff;
     padding:.7rem 1.3rem;border-radius:999px;font-size:.95rem;z-index:99;opacity:0;transition:.25s;
     pointer-events:none;max-width:90%;text-align:center}
@@ -262,11 +267,14 @@
       <p class="lead">填得越全，AI 给菜谱和建议时就越贴合家人的情况。填一次就行，会自动保存。</p>
       <label class="fl">患者称呼</label>
       <input type="text" id="pName" placeholder="例如：老李 / 爷爷">
-      <div class="frow">
-        <div><label class="fl">年龄</label><input type="number" id="pAge" placeholder="60"></div>
-        <div><label class="fl">体重（公斤）</label><input type="number" id="pWeight" placeholder="65"></div>
+      <label class="fl">年龄</label>
+      <input type="number" id="pAge" placeholder="60">
+      <div class="curweight">
+        <span class="lb">当前体重</span>
+        <span class="vv" id="curWeightVal">还没记录</span>
+        <span class="dd" id="curWeightHint">在下面记一次</span>
       </div>
-      <p class="steps">平时在下面的「体重记录」里记体重，这里会自动用最近一次的数字</p>
+      <p class="steps">体重只在下面「体重记录」里填，这里显示最近一次的数字，会自动更新。</p>
       <label class="fl">目前饮食阶段（出院先选流质/半流质，慢慢过渡）</label>
       <select id="pStage">
         <option value="">请选择</option>
@@ -290,7 +298,7 @@
 
     <div class="card">
       <div class="cardhead">⚖️ 体重记录</div>
-      <p class="lead">每隔几天给家人称一次并记下来。恢复期体重要平稳，掉得太快要留意；<b>最近一次体重会自动用于菜谱定量</b>。</p>
+      <p class="lead">体重在这里填一次就行。每隔几天给家人称一次记下来，恢复期体重要平稳，掉得太快要留意；<b>最近一次体重会自动用于菜谱定量</b>，上面档案里的「当前体重」也会跟着更新。</p>
       <div class="frow">
         <div><label class="fl">日期</label><input type="date" id="wDate"></div>
         <div><label class="fl">体重（公斤）</label><input type="number" id="wVal" inputmode="decimal" step="0.1" placeholder="65.5"></div>
@@ -545,17 +553,37 @@ async function syncProfile(){
     }
   } catch (e) {}
 }
+/* 「当前体重」只读展示：数字来自最近一次体重记录，不在这里编辑 */
+function renderCurrentWeight(){
+  const valEl = $('curWeightVal'), hintEl = $('curWeightHint');
+  if (!valEl || !hintEl) return;
+  const p = getProfile();
+  if (p.weight) {
+    valEl.textContent = p.weight + ' 公斤';
+    if (p.weightDate) {
+      const m = String(p.weightDate).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      hintEl.textContent = (m ? (Number(m[2]) + '月' + Number(m[3]) + '日') : p.weightDate) + ' 记录';
+    } else {
+      hintEl.textContent = '还没记过，记一次更准';
+    }
+  } else {
+    valEl.textContent = '还没记录';
+    hintEl.textContent = '在下面记一次';
+  }
+}
 async function loadProfileForm(){
   await syncProfile();  // 云端档案与最新体重
   const p = getProfile();
-  $('pName').value = p.name || ''; $('pAge').value = p.age || ''; $('pWeight').value = p.weight || '';
+  $('pName').value = p.name || ''; $('pAge').value = p.age || '';
   $('pStage').value = p.stage || ''; $('pDischarge').value = p.discharge || '';
   $('pAllergy').value = p.allergy || ''; $('pOther').value = p.other || ''; $('pNotes').value = p.notes || '';
+  renderCurrentWeight();
 }
 $('btnSaveProfile').addEventListener('click', async () => {
   const old = getProfile();
   const p = {
-    name: $('pName').value.trim(), age: $('pAge').value.trim(), weight: $('pWeight').value.trim(),
+    name: $('pName').value.trim(), age: $('pAge').value.trim(),
+    weight: old.weight || '',   // 体重只由「体重记录」写入，保存档案时原样保留
     stage: $('pStage').value, discharge: $('pDischarge').value.trim(),
     allergy: $('pAllergy').value.trim(), other: $('pOther').value.trim(), notes: $('pNotes').value.trim(),
     weightDate: old.weightDate || '', weightTrend: old.weightTrend || '',
@@ -730,7 +758,7 @@ function renderMenu(plan, fromCache){
     tip.style.background = '#FFF8E6';
     const p1 = document.createElement('p');
     p1.style.fontSize = '.92rem';
-    p1.textContent = '还没填年龄和体重，这份菜谱是按 60 岁、60 公斤估算的。填好健康档案后，菜谱会按家人的真实情况定量。';
+    p1.textContent = '还没填年龄或还没记过体重，这份菜谱是按 60 岁、60 公斤估算的。在「健康档案」里填好年龄、记一次体重，菜谱就会按家人的真实情况定量。';
     const b = document.createElement('button');
     b.className = 'btn btn-light btn-block';
     b.style.marginTop = '.6rem';
@@ -1196,6 +1224,7 @@ $('btnSaveWeight').addEventListener('click', async () => {
       } catch (e) {}
     }
     $('wVal').value = '';
+    renderCurrentWeight();
     toast('已记录 ' + v + ' 公斤，菜谱会按新体重量重排');
     loadWeights();
   } catch (e) {
